@@ -1,0 +1,41 @@
+---
+- name: Install packages needed to use a repository over HTTPS
+  apt:
+          name: "{{ packages }}"
+          state: latest
+  vars:
+          packages:
+                  - apt-transport-https
+                  - ca-certificates
+                  - curl
+                  - gnupg-agent
+                  - software-properties-common
+
+- name: Add Docker's official GPG key
+  shell: "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
+
+- name: Add official Docker repo
+  apt_repository:
+          repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+          state: present
+
+- name: Update apt
+  apt: 
+          update_cache: yes
+
+- name: Install Docker packages
+  apt: 
+          name: "{{ packages }}"
+          state: latest
+  vars:
+          packages:
+                  - docker-ce
+                  - docker-ce-cli
+                  - containerd.io
+                  - docker-compose
+
+- name: Enable docker service on boot
+  systemd:
+          name: docker
+          enabled: true
+          state: started
