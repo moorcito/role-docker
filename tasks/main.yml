@@ -1,41 +1,67 @@
 ---
-- name: Install packages needed to use a repository over HTTPS
+- name: Uninstall previous Docker versions
   apt:
-          name: "{{ packages }}"
-          state: latest
+    name: "{{ unnecesary_docker_packages }}"
+    state: absent
   vars:
-          packages:
-                  - apt-transport-https
-                  - ca-certificates
-                  - curl
-                  - gnupg-agent
-                  - software-properties-common
+    unnecesary_docker_packages:
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+  when: ansible_os_family == "Debian"
 
-- name: Add Docker's official GPG key
-  shell: "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
+- name: Ensure necesary Docker packages are installed
+  apt:
+    name: "{{ docker_necesary_packages }}"
+    state: latest
+  vars:
+    docker_necesary_packages:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg-agent
+      - software-properties-common
+  when: ansible_os_family == "Debian"
 
-- name: Add official Docker repo
+- name: Add Docker official GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add Docker Official repository
   apt_repository:
-          repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
-          state: present
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+  when: ansible_os_family == "Debian"
 
-- name: Update apt
-  apt: 
-          update_cache: yes
-
-- name: Install Docker packages
-  apt: 
-          name: "{{ packages }}"
-          state: latest
+- name: Update APT and install Docker CE
+  apt:
+    name: "{{ necesary_docker_packages }}"
+    state: latest
+    update_cache: yes
   vars:
-          packages:
-                  - docker-ce
-                  - docker-ce-cli
-                  - containerd.io
-                  - docker-compose
+    necesary_docker_packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+  when: ansible_os_family == "Debian"
 
-- name: Enable docker service on boot
+- name: Create docker group
+  group:
+    name: docker
+    state: present
+
+- name: Add user {{ ansible_user }} to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+
+- name: Start and enable Docker service
   systemd:
-          name: docker
-          enabled: true
-          state: started
+    name: docker
+    state: started
+    enabled: yes
