@@ -1,4 +1,9 @@
 ---
+- name: Ensure /etc/systemd/system/docker.service.d/ exists
+  file:
+    path: /etc/systemd/system/docker.service.d/
+    state: directory
+
 - name: Create /etc/systemd/system/docker.service.d/startup_options.conf
   template:
     src: templates/docker_startup_options.conf
