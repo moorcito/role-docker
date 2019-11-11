@@ -1,2 +1,2 @@
 ---
-# defaults file for role-docker
+enable_remote_docker_api: false

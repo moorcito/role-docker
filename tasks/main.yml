@@ -1,55 +1,6 @@
 ---
-- name: Uninstall previous Docker versions
-  apt:
-    name: "{{ unnecesary_docker_packages }}"
-    state: absent
-  vars:
-    unnecesary_docker_packages:
-      - docker
-      - docker-engine
-      - docker.io
-      - containerd
-      - runc
-  when: ansible_os_family == "Debian"
-
-- name: Ensure necesary Docker packages are installed
-  apt:
-    name: "{{ docker_necesary_packages }}"
-    state: latest
-  vars:
-    docker_necesary_packages:
-      - apt-transport-https
-      - ca-certificates
-      - curl
-      - gnupg-agent
-      - gnupg2
-      - software-properties-common
-      - docker-compose
-  when: ansible_os_family == "Debian"
-
-- name: Add Docker official GPG key
-  apt_key:
-    url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
-    state: present
-  when: ansible_os_family == "Debian"
-
-- name: Add Docker Official repository
-  apt_repository:
-    repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
-    state: present
-  when: ansible_os_family == "Debian"
-
-- name: Update APT and install Docker CE
-  apt:
-    name: "{{ necesary_docker_packages }}"
-    state: latest
-    update_cache: yes
-  vars:
-    necesary_docker_packages:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-  when: ansible_os_family == "Debian"
+- name: Include distro specific tasks
+  include: "{{ ansible_os_family|lower }}.yml"
 
 - name: Create docker group
   group:
@@ -61,6 +12,10 @@
     name: "{{ ansible_user }}"
     groups: docker
     append: yes
+
+- name: Enable Docker remote API
+  include: remoteAPI.yml
+  when: enable_remote_docker_api == true
 
 - name: Start and enable Docker service
   systemd:

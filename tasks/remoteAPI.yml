@@ -1,0 +1,12 @@
+---
+- name: Create /etc/systemd/system/docker.service.d/startup_options.conf
+  template:
+    src: templates/docker_startup_options.conf
+    dest: /etc/systemd/system/docker.service.d/startup_options.conf
+  when: ansible_tun0 is defined and ansible_tun0.active == true
+
+- name: Reload and restart docker daemon
+  systemd:
+    name: docker
+    state: restarted
+    daemon_reload: yes
